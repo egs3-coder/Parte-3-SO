@@ -40,8 +40,8 @@ fila externa (o evento é em memória; ADR 0002 descreve o outbox para quando ho
 
 ## Tarefas
 
-- [ ] Mover as regras de triagem da Parte 1 para `captacao.negocio.dominio`, com os mesmos testes
-- [ ] `Cpf` como objeto de valor validado no construtor
-- [ ] `RegistrarDoacao` publica `DoacaoRegistrada`
-- [ ] `EntradaDeBolsaPorDoacao` no Estoque
-- [ ] Cenário de aceitação HTTP adaptado (`src/test/resources/aceitacao/doacao.feature`)
+- [x] Mover as regras de triagem da Parte 1 para `captacao.negocio.dominio`, com os mesmos testes
+- [x] `Cpf` como objeto de valor validado no construtor
+- [x] `RegistrarDoacao` publica `DoacaoRegistrada`
+- [x] `EntradaDeBolsaPorDoacao` no Estoque
+- [x] Cenário de aceitação HTTP adaptado (`src/test/resources/aceitacao/doacao.feature`)

@@ -32,6 +32,12 @@ public class InfoController {
                 "GET /estoque/criticos", "tipos abaixo do mínimo (T4.1)",
                 "GET|POST /estoque/bolsas", "listar e registrar bolsas",
                 "POST /estoque/descarte-de-vencidas", "descartar vencidas (T4.2)"));
+        contextos.put("requisicao", Map.of(
+                "GET|POST /requisicoes", "listar e registrar requisições",
+                "POST /requisicoes/{id}/itens/{itemId}/alocacoes", "alocar bolsa (agregado Requisicao)",
+                "POST /requisicoes/{id}/atendimento", "marcar atendida e montar remessa",
+                "POST /requisicoes/{id}/despacho", "abrir viagem",
+                "POST /requisicoes/{id}/cancelamento", "cancelar e liberar bolsas"));
         contextos.put("expedicao", Map.of("GET /remessas", "remessas e guias"));
         contextos.put("transporte", Map.of(
                 "GET /viagens", "viagens",

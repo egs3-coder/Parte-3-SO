@@ -68,8 +68,8 @@ ABO/Rh; expiração automática da reserva em 30 minutos; escolha automática da
 
 ## Tarefas
 
-- [ ] Objetos de valor com teste (`TipoSanguineo`, `Hemocomponente`, `Validade`, `Prioridade`, `Quantidade`, `JustificativaClinica`)
-- [ ] Teste do agregado primeiro (vermelho), depois `Requisicao.alocar` (verde), depois refatoração
-- [ ] Passos do Cucumber chamando o caso de uso `AlocarBolsa` (sem Spring, sem banco)
-- [ ] `EstoqueGateway` (porta no domínio) e `EstoqueClient` (adaptador em dados)
-- [ ] `POST /requisicoes/{id}/itens/{itemId}/alocacoes`
+- [x] Objetos de valor com teste (`TipoSanguineo`, `Hemocomponente`, `Validade`, `Prioridade`, `Quantidade`, `JustificativaClinica`)
+- [x] Teste do agregado primeiro (vermelho), depois `Requisicao.alocar` (verde), depois refatoração
+- [x] Passos do Cucumber chamando o caso de uso `AlocarBolsa` (sem Spring, sem banco)
+- [x] `EstoqueGateway` (porta no domínio) e `EstoqueClient` (adaptador em dados)
+- [x] `POST /requisicoes/{id}/itens/{itemId}/alocacoes`
