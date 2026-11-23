@@ -1,0 +1,50 @@
+classDiagram
+  class Requisicao {
+    <<Raiz do agregado>>
+    RequisicaoId id
+    UnidadeSolicitanteId solicitante
+    Prioridade prioridade
+    JustificativaClinica justificativa
+    StatusRequisicao status
+    registrar()
+    alocar(itemId, BolsaReservada)
+    marcarAtendida()
+    cancelar(motivo)
+    confirmarEntrega()
+  }
+  class ItemRequisicao {
+    <<Entidade>>
+    ItemId id
+    Hemocomponente hemocomponente
+    TipoSanguineo tipoReceptor
+    Quantidade quantidade
+  }
+  class AlocacaoBolsa {
+    <<Entidade>>
+    CodigoBolsa codigo
+    Hemocomponente hemocomponente
+    TipoSanguineo tipoBolsa
+    Validade validade
+  }
+  class Hemocomponente {
+    <<Objeto de valor>>
+    CONCENTRADO_HEMACIAS
+    PLASMA_FRESCO_CONGELADO
+    compativel(doador, receptor)
+  }
+  class TipoSanguineo {
+    <<Objeto de valor>>
+    GrupoABO grupo
+    FatorRh rh
+    antigenos()
+  }
+  class Validade {
+    <<Objeto de valor>>
+    LocalDateTime limite
+    estaValidaEm(Instant)
+  }
+  Requisicao "1" *-- "1..*" ItemRequisicao
+  ItemRequisicao "1" *-- "0..*" AlocacaoBolsa
+  ItemRequisicao ..> Hemocomponente
+  Hemocomponente ..> TipoSanguineo
+  AlocacaoBolsa ..> Validade
