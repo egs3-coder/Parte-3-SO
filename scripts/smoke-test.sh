@@ -11,7 +11,7 @@ checar() {
   local descricao="$1" caminho="$2" esperado="$3"
   local corpo
   corpo=$(curl -fsS --max-time 30 "${URL}${caminho}")
-  if ! grep -q -- "$esperado" <<<"$corpo"; then
+  if ! grep -qF -- "$esperado" <<<"$corpo"; then
     echo "FALHOU: ${descricao} (${caminho}) não contém ${esperado}" >&2
     echo "$corpo" | head -c 500 >&2
     exit 1
