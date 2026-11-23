@@ -8,7 +8,7 @@ import java.util.Set;
  *
  * <p>Faz parte do núcleo compartilhado (shared kernel): Captação, Estoque e Requisição usam o mesmo conceito.
  * Ele só sabe quais antígenos cada tipo tem; a regra de compatibilidade depende do hemocomponente e fica em
- * no hemocomponente (regra I1 da Requisição).
+ * {@link Hemocomponente#compativel(TipoSanguineo, TipoSanguineo)} (invariante I1 da Requisição).
  */
 public enum TipoSanguineo {
 

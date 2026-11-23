@@ -36,6 +36,6 @@ MQTT/IoT Core e banco de séries temporais (cenário alto, ADR 0001); posição 
 
 ## Tarefas
 
-- [ ] Agregado `Viagem`, `FaixaTemperatura`, `LeituraTelemetria` com teste
-- [ ] `TradutorSensorFabricante` (°F → °C)
-- [ ] `POST /viagens/{id}/leituras`, `POST /viagens/{id}/entrega`, `GET /viagens`
+- [x] Agregado `Viagem`, `FaixaTemperatura`, `LeituraTelemetria` com teste
+- [x] `TradutorSensorFabricante` (°F → °C)
+- [x] `POST /viagens/{id}/leituras`, `POST /viagens/{id}/entrega`, `GET /viagens`

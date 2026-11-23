@@ -255,7 +255,7 @@
   <div class="wrap">
     <a class="marca" href="#">
       <span class="selo"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gota" style="color:#ff2d55"/></svg></span>
-      <span>Hemo<b>centro</b></span>
+      <span>Rota<b>Vital</b></span>
     </a>
     <nav class="links" aria-label="Seções">
       <a href="#operacao">Operação</a>
@@ -271,9 +271,9 @@
   <!-- abertura + jornada -->
   <section class="abertura">
     <div class="wrap">
-      <span class="rotulo">Projeto Integrador · CESAR School</span>
+      <span class="rotulo">Projeto Integrador · CESAR School · Parte 3: DDD em código</span>
       <h1>A jornada do sangue, <em>do doador ao paciente.</em></h1>
-      <p>Cinco etapas, uma regra protegida por teste em cada uma. Escolha uma etapa para operar o sistema ao vivo.</p>
+      <p>Seis bounded contexts, cada um em três camadas. Escolha uma etapa para operar o sistema ao vivo: a quinta passa pelo agregado Requisição e pela saga até a entrega.</p>
 
       <div class="jornada" role="tablist" aria-label="Etapas da jornada do sangue" id="jornada">
         <button class="etapa" role="tab" data-et="captar" aria-selected="true">
@@ -298,8 +298,8 @@
         </button>
         <button class="etapa" role="tab" data-et="distribuir" aria-selected="false">
           <div class="icone"><svg><use href="#i-hospital"/></svg></div>
-          <div class="n">05</div><h3>Distribuir</h3><p>Atender transfusão</p>
-          <span class="dado" id="dDistribuir"><i></i>ABO/Rh</span>
+          <div class="n">05</div><h3>Requisitar</h3><p>Alocar, expedir, entregar</p>
+          <span class="dado" id="dDistribuir"><i></i>– requisições</span>
         </button>
       </div>
     </div>
@@ -385,7 +385,7 @@
             <form class="painel" id="fDoacao">
               <span class="rota">POST /doadores/{id}/doacoes</span>
               <h4>Registrar doação</h4>
-              <p class="sub">Só registra se o doador estiver apto (T2.2). A bolsa entra no estoque na hora.</p>
+              <p class="sub">Só registra se o doador estiver apto (T2.2). A Captação publica <span class="mono">DoacaoRegistrada</span> e o Estoque dá entrada da bolsa.</p>
               <div class="campos"><div class="campo"><label for="idDoacao">ID do doador</label><input id="idDoacao" class="id-doador" type="number" min="1" required></div></div>
               <div class="acoes"><button class="btn neon" type="submit">Registrar doação</button></div>
               <div class="resultado" role="status"></div>
@@ -414,29 +414,56 @@
             <button class="btn" type="button" data-atualizar>Atualizar ↻</button>
           </div>
           <div class="tipos" id="tipos"></div>
-          <p class="nota" style="margin-bottom:0">Alerta (T4.1): tipos O abaixo de 5 bolsas, demais tipos abaixo de 3 · <span class="rota">GET /estoque · GET /estoque/criticos</span></p>
+          <p class="nota" style="margin-bottom:0">Concentrado de hemácias. Alerta (T4.1): tipos O abaixo de 5 bolsas, demais tipos abaixo de 3 · <span class="rota">GET /estoque · GET /estoque/criticos</span> · plasma utilizável: <b id="pPlasma">–</b> bolsas</p>
         </div>
 
-        <!-- 05 distribuir -->
+        <!-- 05 requisitar (contexto Requisição + Expedição + Transporte) -->
         <div class="quadro" id="q-distribuir" role="tabpanel">
           <div class="duas">
-            <form class="painel" id="fTransfusao">
-              <span class="rota">POST /transfusoes</span>
-              <h4>Atender solicitação</h4>
-              <p class="sub">Mesmo tipo primeiro (isogrupo), depois a bolsa que vence antes (FEFO). Sem estoque suficiente, recusa inteira.</p>
+            <form class="painel" id="fRequisicao">
+              <span class="rota">POST /requisicoes</span>
+              <h4>Registrar requisição</h4>
+              <p class="sub">Pedido do hospital. Emergência exige justificativa clínica (I4); a requisição já entra em atendimento.</p>
               <div class="campos">
-                <div class="campo"><label for="receptor">Tipo do receptor</label><select id="receptor" class="sel-tipo"></select></div>
-                <div class="campo"><label for="qtd">Quantidade</label><input id="qtd" type="number" min="1" max="20" value="1" required></div>
+                <div class="campo"><label for="rUnidade">Unidade solicitante</label><select id="rUnidade"></select></div>
+                <div class="campo"><label for="rPrioridade">Prioridade</label><select id="rPrioridade"><option value="ROTINA">Rotina (24 h)</option><option value="URGENCIA" selected>Urgência (4 h)</option><option value="EMERGENCIA">Emergência (1 h)</option></select></div>
+                <div class="campo cheio"><label for="rJust">Justificativa clínica</label><input id="rJust" placeholder="obrigatória na emergência"></div>
+                <div class="campo"><label for="rHemo">Hemocomponente</label><select id="rHemo"><option value="CONCENTRADO_HEMACIAS">Concentrado de hemácias</option><option value="PLASMA_FRESCO_CONGELADO">Plasma fresco congelado</option></select></div>
+                <div class="campo"><label for="rReceptor">Tipo do receptor</label><select id="rReceptor" class="sel-tipo"></select></div>
+                <div class="campo"><label for="rQtd">Quantidade</label><input id="rQtd" type="number" min="1" max="20" value="1" required></div>
               </div>
-              <div style="margin-top:16px;display:flex;align-items:baseline;gap:10px"><span class="destaque-num" id="compTotal" style="font-size:34px">–</span><span style="color:var(--texto-2);font-size:13px" id="compTxt">bolsas compatíveis em estoque</span></div>
-              <div class="acoes"><button class="btn neon" type="submit">Solicitar bolsas</button></div>
+              <div class="acoes"><button class="btn neon" type="submit">Registrar</button></div>
               <div class="resultado" role="status"></div>
             </form>
-            <div class="painel">
-              <h4>Compatibilidade de hemácias</h4>
-              <p class="sub">Linha = doador · coluna = receptor (T3.1). A coluna do receptor escolhido fica destacada.</p>
-              <div class="rolagem"><table class="matriz" id="matriz"></table></div>
+            <form class="painel" id="fAlocar">
+              <span class="rota">POST /requisicoes/{id}/itens/{item}/alocacoes</span>
+              <h4>Alocar bolsa (agregado Requisição)</h4>
+              <p class="sub">A raiz recusa bolsa incompatível (I1), que vence antes da entrega prevista (I2) ou além da quantidade (I3).</p>
+              <div class="campos">
+                <div class="campo"><label for="aReq">Requisição</label><select id="aReq"></select></div>
+                <div class="campo"><label for="aItem">Item</label><select id="aItem"></select></div>
+                <div class="campo cheio"><label for="aBolsa">Bolsa do estoque</label><select id="aBolsa"></select></div>
+              </div>
+              <div class="acoes">
+                <button class="btn neon" type="submit">Alocar</button>
+                <button class="btn" type="button" data-passo="atendimento">Marcar atendida</button>
+                <button class="btn" type="button" data-passo="despacho">Despachar</button>
+                <button class="btn" type="button" data-passo="cancelamento">Cancelar</button>
+              </div>
+              <div class="resultado" role="status"></div>
+              <div id="detalheReq" style="margin-top:14px"></div>
+              <div class="campos" style="margin-top:14px">
+                <div class="campo"><label for="tF">Sensor da caixa (°F)</label><input id="tF" type="number" step="0.1" value="41"></div>
+                <div class="campo" style="align-self:end;display:flex;gap:8px"><button class="btn peq" type="button" id="btnLeitura">Enviar leitura</button><button class="btn peq" type="button" id="btnEntrega">Confirmar entrega</button></div>
+              </div>
+            </form>
+          </div>
+          <div class="painel" style="margin-top:22px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+              <div><h4>Compatibilidade (invariante I1)</h4><p class="sub">Linha = bolsa · coluna = receptor. No plasma a regra se inverte e o Rh não conta.</p></div>
+              <div class="acoes" style="margin-top:0"><button class="btn peq" type="button" data-matriz="CONCENTRADO_HEMACIAS">Hemácias</button><button class="btn peq" type="button" data-matriz="PLASMA_FRESCO_CONGELADO">Plasma</button></div>
             </div>
+            <div class="rolagem"><table class="matriz" id="matriz"></table></div>
           </div>
         </div>
       </div>
@@ -447,15 +474,15 @@
   <section class="bloco" id="historias">
     <div class="wrap">
       <div class="titulo-bloco">
-        <div><span class="rotulo">Story map · Release 1</span><h2>Três histórias, cada regra com um teste</h2><p>O teste foi escrito antes do código; se ele fica vermelho, o pull request não entra.</p></div>
+        <div><span class="rotulo">DDD · Parte 3</span><h2>Seis contextos, um agregado no centro</h2><p>Cada contexto é um pacote com apresentação, negócio (aplicação + domínio) e dados. O ArchUnit barra na esteira qualquer import que quebre a regra.</p></div>
       </div>
       <div class="historias">
-        <article class="historia"><span class="rotulo">H1 · Triagem</span><h3>Doador apto ou não</h3><blockquote>Como atendente, quero saber se o doador está apto para não coletar de quem a norma proíbe.</blockquote><ul class="lista-regras"><li><span class="cod">T1.1–T1.4</span>Idade, peso, intervalo e limite anual.</li></ul></article>
-        <article class="historia"><span class="rotulo">H2 · Coleta</span><h3>Doação vira bolsa</h3><blockquote>Como técnico de coleta, quero registrar a doação para que a bolsa entre no estoque com a validade certa.</blockquote><ul class="lista-regras"><li><span class="cod">T2.1–T2.4</span>35 dias, só apto doa, persistência.</li></ul></article>
-        <article class="historia"><span class="rotulo">H3 · Transfusão</span><h3>Só sangue compatível</h3><blockquote>Como médico, quero receber bolsas compatíveis para transfundir sem risco de reação hemolítica.</blockquote><ul class="lista-regras"><li><span class="cod">T3.1–T3.5</span>ABO/Rh, sem vencidas, isogrupo + FEFO.</li></ul></article>
+        <article class="historia"><span class="rotulo">Captação · H1</span><h3>Doador apto ou não</h3><blockquote>Como atendente, quero saber se o doador está apto para não coletar de quem a norma proíbe.</blockquote><ul class="lista-regras"><li><span class="cod">T1.1–T1.4</span>Idade, peso, intervalo e limite anual.</li></ul></article>
+        <article class="historia"><span class="rotulo">Captação → Estoque · H2</span><h3>Doação vira bolsa</h3><blockquote>Como técnico de coleta, quero registrar a doação para que a bolsa entre no estoque com a validade certa.</blockquote><ul class="lista-regras"><li><span class="cod">T2.1–T2.4</span>35 dias, só apto doa, persistência.</li></ul></article>
+        <article class="historia"><span class="rotulo">Requisição (core)</span><h3>Bolsa certa, no prazo</h3><blockquote>Como atendente, quero alocar bolsas a um item da requisição para que o hospital receba apenas bolsas compatíveis e dentro da validade.</blockquote><ul class="lista-regras"><li><span class="cod">I1–I5</span>Compatibilidade por hemocomponente, validade na entrega, quantidade, emergência, ciclo de vida.</li></ul></article>
       </div>
       <div class="release2">
-        <span class="rotulo">Release 2 · uma regra por integrante, red → green</span>
+        <span class="rotulo">Parte 1 · Release 2: uma regra por integrante, red → green (repositório SO)</span>
         <div class="grade" id="release2"></div>
       </div>
     </div>
@@ -467,9 +494,9 @@
       <div class="titulo-bloco"><div><span class="rotulo">Entrega contínua</span><h2>Como esta versão chegou aqui</h2><p>Nada vai para a main sem pull request, teste verde e aprovação de um colega. O merge publica sozinho.</p></div></div>
       <div class="esteira">
         <div class="passo"><div class="num">01 · pull request</div><h3>GitHub Flow</h3><p>Branch curta; main protegida com 1 aprovação e sem bypass.</p></div>
-        <div class="passo"><div class="num">02 · testes</div><h3>mvn verify</h3><p>Unitário, integração com PostgreSQL real (Testcontainers) e aceitação em Gherkin.</p></div>
+        <div class="passo"><div class="num">02 · testes</div><h3>mvn test + verify</h3><p>Domínio (TDD), ArchUnit, Cucumber da Parte 2, integração com PostgreSQL real e aceitação HTTP.</p></div>
         <div class="passo"><div class="num">03 · imagem</div><h3>Docker multi-stage</h3><p>Publicada no GHCR com o SHA do commit.</p></div>
-        <div class="passo"><div class="num">04 · deploy</div><h3>Render</h3><p>Deploy hook + conferência da versão no ar. Rollback pelo SHA anterior.</p></div>
+        <div class="passo"><div class="num">04 · deploy</div><h3>Render + fumaça</h3><p>Deploy hook, versão no ar conferida e teste de fumaça nos contextos. Rollback pelo SHA anterior.</p></div>
       </div>
       <div class="links-esteira">
         <a class="btn" href="https://github.com/egs3-coder/Parte-3-SO" target="_blank" rel="noopener">Repositório</a>
@@ -491,7 +518,7 @@
 
 <footer>
   <div class="wrap">
-    <span>Hemocentro · Projeto Integrador · Infraestrutura de Software 2026.2</span>
+    <span>Rota Vital · Projeto Integrador · Infraestrutura de Software 2026.2</span>
     <span class="paleta"><span><i style="background:#ff2d55;box-shadow:0 0 8px #ff2d55"></i>#ff2d55</span><span><i style="background:#0b0e17;border:1px solid #2a3145"></i>#0b0e17</span></span>
   </div>
 </footer>
@@ -500,14 +527,22 @@
 (() => {
   const TIPOS = [["O-",[]],["O+",["D"]],["A-",["A"]],["A+",["A","D"]],["B-",["B"]],["B+",["B","D"]],["AB-",["A","B"]],["AB+",["A","B","D"]]];
   const ANT = Object.fromEntries(TIPOS);
-  const compativel = (d, r) => ANT[d].every(a => ANT[r].includes(a));
+  // Espelho visual da regra do domínio (Hemocomponente.compativel); quem decide de verdade é o agregado no servidor.
+  const COMPAT = {
+    CONCENTRADO_HEMACIAS: (d, r) => ANT[d].every(a => ANT[r].includes(a)),
+    PLASMA_FRESCO_CONGELADO: (d, r) => ANT[r].filter(a => a !== "D").every(a => ANT[d].includes(a))
+  };
+  const compativel = COMPAT.CONCENTRADO_HEMACIAS;
   const MINIMO = t => t.startsWith("O") ? 5 : 3;
   const REPO = "https://github.com/egs3-coder/Parte-3-SO";
+  const REPO_P1 = "https://github.com/egs3-coder/SO";
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const dataBR = iso => iso ? String(iso).split("-").reverse().join("/") : "";
-  const estado = { estoque: null, criticos: [], recentes: [] };
+  const dataHoraBR = iso => iso ? dataBR(String(iso).slice(0, 10)) + " " + String(iso).slice(11, 16) : "";
+  const NOME_HEMO = { CONCENTRADO_HEMACIAS: "hemácias", PLASMA_FRESCO_CONGELADO: "plasma" };
+  const estado = { estoque: null, criticos: [], recentes: [], requisicoes: [], bolsas: [], unidades: [], matriz: "CONCENTRADO_HEMACIAS" };
 
   async function api(caminho, opcoes = {}) {
     const r = await fetch(caminho, { headers: { "Content-Type": "application/json", "Accept": "application/json" }, ...opcoes });
@@ -523,7 +558,7 @@
     triar: ["02", "Triar", "H1 · triagem"],
     coletar: ["03", "Coletar", "H2 · doação"],
     armazenar: ["04", "Armazenar", "estoque · T4.1"],
-    distribuir: ["05", "Distribuir", "H3 · transfusão"]
+    distribuir: ["05", "Requisitar", "agregado Requisição · saga"]
   };
   const ORDEM = Object.keys(ETAPAS);
   let atual = "captar";
@@ -540,7 +575,7 @@
   $("#prox").addEventListener("click", () => abrir(ORDEM[(ORDEM.indexOf(atual) + 1) % 5]));
 
   $$(".sel-tipo").forEach(sel => TIPOS.forEach(([t]) => sel.add(new Option(t, t))));
-  $("#receptor").value = "A+";
+  $("#rReceptor").value = "A+";
 
   /* ---------- status ---------- */
   async function status() {
@@ -578,7 +613,10 @@
       $("#pBolsas").textContent = total ?? "–";
       $("#pAlertas").textContent = estado.estoque ? estado.criticos.length : "–";
       $("#pDoacoes").textContent = res ? res.doacoes : "–";
-      desenharEstoque(); desenharRecentes(); desenharCompat();
+      $("#dDistribuir").innerHTML = `<i></i>${res && res.requisicoes != null ? res.requisicoes : "–"} requisições`;
+      $("#pPlasma").textContent = res && res.estoquePlasma ? Object.values(res.estoquePlasma).reduce((a, b) => a + b, 0) : "–";
+      desenharEstoque(); desenharRecentes(); desenharMatriz();
+      await carregarRequisicoes();
     } finally { $$("[data-atualizar]").forEach(b => b.disabled = false); }
   }
   $$("[data-atualizar]").forEach(b => b.addEventListener("click", carregar));
@@ -607,15 +645,14 @@
     if (b.dataset.acao === "triar") $("#fTriagem").requestSubmit();
   });
 
-  function desenharCompat() {
-    const r = $("#receptor").value;
-    const doadores = TIPOS.map(([t]) => t).filter(t => compativel(t, r));
-    $("#compTotal").textContent = estado.estoque ? doadores.reduce((s, t) => s + (estado.estoque[t] || 0), 0) : "–";
-    $("#compTxt").textContent = `bolsas compatíveis com ${r} em estoque (de ${doadores.join(", ")})`;
-    const col = TIPOS.findIndex(([t]) => t === r);
-    $$("#matriz tbody tr").forEach(tr => $$("td", tr).forEach((td, i) => td.classList.toggle("foco", i === col)));
+  function desenharMatriz() {
+    const regra = COMPAT[estado.matriz];
+    let h = `<caption class="sr">Compatibilidade de ${NOME_HEMO[estado.matriz]}</caption><thead><tr><th scope="col"><span class="sr">Bolsa/receptor</span></th>${TIPOS.map(([r]) => `<th scope="col">${r}</th>`).join("")}</tr></thead><tbody>`;
+    TIPOS.forEach(([d]) => { h += `<tr><th scope="row">${d}</th>${TIPOS.map(([r]) => { const ok = regra(d, r); return `<td class="${ok ? "sim" : "nao"}" title="${d} → ${r}: ${ok ? "compatível" : "incompatível"}">${ok ? "●" : "·"}</td>`; }).join("")}</tr>`; });
+    $("#matriz").innerHTML = h + "</tbody>";
+    $$("[data-matriz]").forEach(b => b.classList.toggle("neon", b.dataset.matriz === estado.matriz));
   }
-  $("#receptor").addEventListener("change", desenharCompat);
+  $$("[data-matriz]").forEach(b => b.addEventListener("click", () => { estado.matriz = b.dataset.matriz; desenharMatriz(); }));
 
   /* ---------- formulários ---------- */
   function mostrar(form, tipo, html) { const box = $(".resultado", form); box.className = "resultado mostrar " + tipo; box.innerHTML = html; }
@@ -679,30 +716,103 @@
       const r = await api(`/doadores/${encodeURIComponent(id)}/doacoes`, { method: "POST" });
       if (r.ok) {
         const d = r.corpo;
-        mostrar(f, "sucesso", `<strong class="t">Doação registrada</strong>Bolsa #${d.bolsaId} · <span class="tipo-tag">${esc(d.tipoSanguineo)}</span> · coletada em ${dataBR(d.dataColeta)} · válida até <b>${dataBR(d.validade)}</b>. <a href="#operacao" data-ir="armazenar">Ver no estoque →</a>`);
+        const b = await seguro(api(`/estoque/bolsas/${encodeURIComponent(d.codigoBolsa)}`));
+        const validade = b.ok ? ` · válida até <b>${dataHoraBR(b.corpo.validade)}</b>` : "";
+        mostrar(f, "sucesso", `<strong class="t">Doação registrada</strong>Bolsa <span class="mono">${esc(d.codigoBolsa)}</span> · <span class="tipo-tag">${esc(d.tipoSanguineo)}</span> · coletada em ${dataBR(d.dataColeta)}${validade}. O Estoque recebeu pelo evento <span class="mono">DoacaoRegistrada</span>. <a href="#operacao" data-ir="armazenar">Ver no estoque →</a>`);
         carregar();
       } else mostrar(f, "erro", erroHtml(r, r.status === 422 ? "Doação recusada pela triagem" : "Não foi possível registrar"));
     });
   });
 
-  $("#fTransfusao").addEventListener("submit", ev => {
+  /* ---------- requisição (agregado), expedição e transporte ---------- */
+  async function carregarRequisicoes(manter) {
+    const [q, b, u] = await Promise.all([seguro(api("/requisicoes")), seguro(api("/estoque/bolsas")), seguro(api("/rede/unidades"))]);
+    if (q.ok && Array.isArray(q.corpo)) estado.requisicoes = q.corpo;
+    if (b.ok && Array.isArray(b.corpo)) estado.bolsas = b.corpo;
+    if (u.ok && Array.isArray(u.corpo)) estado.unidades = u.corpo;
+    const selU = $("#rUnidade"), uAtual = selU.value;
+    selU.innerHTML = estado.unidades.filter(x => x.ativa).map(x => `<option value="${esc(x.codigo)}">${esc(x.nome)} (${esc(x.cidade)})</option>`).join("");
+    if (uAtual) selU.value = uAtual;
+    const selR = $("#aReq"), rAtual = manter || selR.value;
+    selR.innerHTML = estado.requisicoes.length ? estado.requisicoes.map(r => `<option value="${esc(r.id)}">${esc(r.id)} · ${esc(r.unidadeSolicitante)} · ${esc(r.status)}</option>`).join("") : `<option value="">nenhuma ainda</option>`;
+    if (rAtual && estado.requisicoes.some(r => r.id === rAtual)) selR.value = rAtual;
+    desenharRequisicao();
+  }
+  const reqAtual = () => estado.requisicoes.find(r => r.id === $("#aReq").value);
+  function desenharRequisicao() {
+    const r = reqAtual(), selI = $("#aItem"), iAtual = selI.value;
+    selI.innerHTML = r ? r.itens.map(i => `<option value="${esc(i.id)}">${esc(i.id)} · ${NOME_HEMO[i.hemocomponente]} · ${esc(i.tipoReceptor)} · ${i.alocadas}/${i.quantidade}</option>`).join("") : "";
+    if (iAtual && r && r.itens.some(i => i.id === iAtual)) selI.value = iAtual;
+    desenharBolsas();
+    if (!r) { $("#detalheReq").innerHTML = `<p class="vazio">Registre uma requisição ao lado para começar.</p>`; return; }
+    const passos = ["EM_ATENDIMENTO", "ATENDIDA", "EM_TRANSPORTE", "ENTREGUE"];
+    $("#detalheReq").innerHTML = `<div class="chips">${passos.map(p => `<span class="chip" style="${p === r.status ? "border-color:var(--neon);color:var(--neon)" : ""}">${p}</span>`).join("")}${r.status === "CANCELADA" ? `<span class="chip" style="border-color:#ff2d55;color:#ff2d55">CANCELADA</span>` : ""}</div>
+      <p class="nota">${esc(r.prioridade)} · entrega prevista ${dataHoraBR(r.entregaPrevista)}${r.guiaRemessa ? ` · guia <span class="mono">${esc(r.guiaRemessa)}</span>` : ""}${r.viagemId ? ` · viagem <span class="mono">${esc(r.viagemId)}</span>` : ""}</p>
+      <div class="chips">${r.itens.flatMap(i => i.bolsas.map(b => `<span class="chip">${esc(i.id)} ← ${esc(b.codigo)} · ${esc(b.tipoSanguineo)}</span>`)).join("") || `<span class="chip">nenhuma bolsa alocada</span>`}</div>`;
+  }
+  function desenharBolsas() {
+    const r = reqAtual(), item = r && r.itens.find(i => i.id === $("#aItem").value);
+    const ordem = b => (item && b.hemocomponente === item.hemocomponente ? 0 : 1);
+    $("#aBolsa").innerHTML = [...estado.bolsas].sort((a, b) => ordem(a) - ordem(b)).map(b =>
+      `<option value="${esc(b.codigo)}">${esc(b.codigo)} · ${NOME_HEMO[b.hemocomponente]} ${esc(b.tipoSanguineo)} · vence ${dataHoraBR(b.validade)}</option>`).join("") || `<option value="">estoque vazio</option>`;
+  }
+  $("#aReq").addEventListener("change", desenharRequisicao);
+  $("#aItem").addEventListener("change", desenharBolsas);
+
+  $("#fRequisicao").addEventListener("submit", ev => {
     ev.preventDefault(); const f = ev.currentTarget;
     ocupado(f, async () => {
-      const r = await api("/transfusoes", { method: "POST", body: JSON.stringify({ tipoReceptor: $("#receptor").value, quantidade: Number($("#qtd").value) }) });
+      const corpo = { unidadeSolicitante: $("#rUnidade").value, prioridade: $("#rPrioridade").value, justificativa: $("#rJust").value,
+        itens: [{ hemocomponente: $("#rHemo").value, tipoReceptor: $("#rReceptor").value, quantidade: Number($("#rQtd").value) }] };
+      const r = await api("/requisicoes", { method: "POST", body: JSON.stringify(corpo) });
       if (r.ok) {
-        const b = r.corpo.bolsas || [];
-        mostrar(f, "sucesso", `<strong class="t">${b.length} bolsa${b.length === 1 ? "" : "s"} entregue${b.length === 1 ? "" : "s"} para ${esc(r.corpo.tipoReceptor)}</strong><div class="chips">${b.map(x => `<span class="chip">#${x.id} · ${esc(x.tipoSanguineo)} · vence ${dataBR(x.validade)}</span>`).join("")}</div>`);
-        carregar();
-      } else mostrar(f, "erro", erroHtml(r, r.status === 409 ? "Estoque insuficiente" : "Não foi possível atender"));
+        mostrar(f, "sucesso", `<strong class="t">Requisição ${esc(r.corpo.id)} em atendimento</strong>Entrega prevista ${dataHoraBR(r.corpo.entregaPrevista)}. Aloque as bolsas ao lado.`);
+        await carregarRequisicoes(r.corpo.id);
+      } else mostrar(f, "erro", erroHtml(r, "Requisição recusada"));
     });
   });
 
-  /* ---------- matriz, release 2, equipe ---------- */
-  (() => {
-    let h = `<caption class="sr">Compatibilidade de hemácias</caption><thead><tr><th scope="col"><span class="sr">Doador/receptor</span></th>${TIPOS.map(([r]) => `<th scope="col">${r}</th>`).join("")}</tr></thead><tbody>`;
-    TIPOS.forEach(([d]) => { h += `<tr><th scope="row">${d}</th>${TIPOS.map(([r]) => { const ok = compativel(d, r); return `<td class="${ok ? "sim" : "nao"}" title="${d} → ${r}: ${ok ? "compatível" : "incompatível"}">${ok ? "●" : "·"}</td>`; }).join("")}</tr>`; });
-    $("#matriz").innerHTML = h + "</tbody>";
-  })();
+  $("#fAlocar").addEventListener("submit", ev => {
+    ev.preventDefault(); const f = ev.currentTarget, id = $("#aReq").value, item = $("#aItem").value;
+    if (!id) return;
+    ocupado(f, async () => {
+      const r = await api(`/requisicoes/${encodeURIComponent(id)}/itens/${encodeURIComponent(item)}/alocacoes`, { method: "POST", body: JSON.stringify({ codigoBolsa: $("#aBolsa").value }) });
+      if (r.ok) mostrar(f, "sucesso", `<strong class="t">Alocação aceita</strong>A bolsa ${esc($("#aBolsa").value)} foi reservada no Estoque e alocada ao ${esc(item)}.`);
+      else mostrar(f, "erro", erroHtml(r, r.status === 422 ? "O agregado recusou" : "Não foi possível alocar"));
+      await carregarRequisicoes(id); carregar();
+    });
+  });
+
+  $$("[data-passo]").forEach(btn => btn.addEventListener("click", async () => {
+    const f = $("#fAlocar"), id = $("#aReq").value, passo = btn.dataset.passo;
+    if (!id) return;
+    let corpo = "{}";
+    if (passo === "cancelamento") { const motivo = prompt("Motivo do cancelamento"); if (motivo === null) return; corpo = JSON.stringify({ motivo }); }
+    const r = await seguro(api(`/requisicoes/${encodeURIComponent(id)}/${passo}`, { method: "POST", body: corpo }));
+    const titulos = { atendimento: "Requisição atendida; a Expedição montou a remessa", despacho: "Viagem aberta pelo Transporte", cancelamento: "Requisição cancelada; bolsas liberadas no Estoque" };
+    if (r.ok) mostrar(f, "sucesso", `<strong class="t">${titulos[passo]}</strong>${r.corpo.guiaRemessa ? "Guia " + esc(r.corpo.guiaRemessa) + ". " : ""}${r.corpo.viagemId ? "Viagem " + esc(r.corpo.viagemId) + "." : ""}`);
+    else mostrar(f, "erro", erroHtml(r, "Passo recusado"));
+    await carregarRequisicoes(id); carregar();
+  }));
+
+  $("#btnLeitura").addEventListener("click", async () => {
+    const f = $("#fAlocar"), r = reqAtual();
+    if (!r || !r.viagemId) return mostrar(f, "erro", `<strong class="t">Sem viagem</strong>Despache a requisição primeiro.`);
+    const v = await seguro(api(`/viagens/${encodeURIComponent(r.viagemId)}/leituras`, { method: "POST", body: JSON.stringify({ temperaturaF: Number($("#tF").value) }) }));
+    if (v.ok) mostrar(f, v.corpo.excursoes ? "erro" : "sucesso", `<strong class="t">Leitura registrada: ${v.corpo.ultimaTemperaturaC} °C</strong>O sensor mandou ${esc($("#tF").value)} °F; a camada anticorrupção converteu. ${v.corpo.leituras} leitura(s), ${v.corpo.excursoes} excursão(ões) fora de ${v.corpo.faixaMinimaC}–${v.corpo.faixaMaximaC} °C.`);
+    else mostrar(f, "erro", erroHtml(v, "Leitura recusada"));
+  });
+
+  $("#btnEntrega").addEventListener("click", async () => {
+    const f = $("#fAlocar"), r = reqAtual();
+    if (!r || !r.viagemId) return mostrar(f, "erro", `<strong class="t">Sem viagem</strong>Despache a requisição primeiro.`);
+    const v = await seguro(api(`/viagens/${encodeURIComponent(r.viagemId)}/entrega`, { method: "POST", body: "{}" }));
+    if (v.ok) mostrar(f, "sucesso", `<strong class="t">Entrega concluída</strong>O Transporte publicou <span class="mono">EntregaConcluida</span> e a Requisição foi encerrada.`);
+    else mostrar(f, "erro", erroHtml(v, "Entrega recusada"));
+    await carregarRequisicoes(r.id);
+  });
+
+  /* ---------- release 2 (Parte 1) e equipe ---------- */
 
   const EQUIPE = [
     ["ewerton", "Ewerton Guilherme da Silva", "Product Owner", "T4.1", "Alerta de estoque crítico", 3],
@@ -714,11 +824,12 @@
     ["eloi", "Eloi de Lima Sousa", "Frontend / UI", "T1.9", "Pressão arterial", 14]
   ];
   $("#release2").innerHTML = EQUIPE.map(([, n, , t, r, pr]) =>
-    `<div class="item"><span class="mono" style="color:var(--neon)">${t}</span> · <a href="${REPO}/pull/${pr}" target="_blank" rel="noopener">PR #${pr}</a><b>${esc(r)}</b>${esc(n.split(" ")[0])}</div>`).join("");
+    `<div class="item"><span class="mono" style="color:var(--neon)">${t}</span> · <a href="${REPO_P1}/pull/${pr}" target="_blank" rel="noopener">PR #${pr}</a><b>${esc(r)}</b>${esc(n.split(" ")[0])}</div>`).join("");
   $("#gradeEquipe").innerHTML = EQUIPE.map(([f, n, p, t, , pr]) =>
-    `<div class="pessoa"><img src="https://raw.githubusercontent.com/egs3-coder/SO/main/docs/equipe/${f}.jpg" alt="${esc(n)}" loading="lazy" onerror="this.style.visibility='hidden'"><b>${esc(n)}</b><span>${esc(p)}</span><span class="mono">${t}</span><a href="${REPO}/pull/${pr}" target="_blank" rel="noopener">PR #${pr}</a></div>`).join("");
+    `<div class="pessoa"><img src="https://raw.githubusercontent.com/egs3-coder/SO/main/docs/equipe/${f}.jpg" alt="${esc(n)}" loading="lazy" onerror="this.style.visibility='hidden'"><b>${esc(n)}</b><span>${esc(p)}</span><span class="mono">${t}</span><a href="${REPO_P1}/pull/${pr}" target="_blank" rel="noopener">PR #${pr} (Parte 1)</a></div>`).join("");
 
   abrir("captar");
+  desenharMatriz();
   status();
   carregar();
 })();

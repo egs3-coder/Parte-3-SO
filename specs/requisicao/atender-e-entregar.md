@@ -47,8 +47,8 @@ requisição); notificação ao hospital; outbox transacional (ADR 0002), desnec
 
 ## Tarefas
 
-- [ ] `Requisicao.marcarAtendida`, `registrarRemessa`, `iniciarTransporte`, `confirmarEntrega`, `cancelar` com teste
-- [ ] Casos de uso `AtenderRequisicao`, `DespacharRequisicao`, `CancelarRequisicao`
-- [ ] Listener `ConfirmarEntregaAoConcluirViagem` (evento `EntregaConcluida`)
-- [ ] Endpoints `POST /requisicoes/{id}/atendimento`, `/despacho`, `/cancelamento`
-- [ ] Cenário de aceitação HTTP do fluxo completo (`src/test/resources/aceitacao/rota_vital.feature`)
+- [x] `Requisicao.marcarAtendida`, `registrarRemessa`, `iniciarTransporte`, `confirmarEntrega`, `cancelar` com teste
+- [x] Casos de uso `AtenderRequisicao`, `DespacharRequisicao`, `CancelarRequisicao`
+- [x] Listener `ConfirmarEntregaAoConcluirViagem` (evento `EntregaConcluida`)
+- [x] Endpoints `POST /requisicoes/{id}/atendimento`, `/despacho`, `/cancelamento`
+- [x] Cenário de aceitação HTTP do fluxo completo (`src/test/resources/aceitacao/rota_vital.feature`)

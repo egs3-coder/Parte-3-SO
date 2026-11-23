@@ -38,6 +38,6 @@ Expiração automática da reserva; rastreio ISBT 128 completo.
 
 ## Tarefas
 
-- [ ] Agregado `Bolsa` com teste
-- [ ] `ReservarBolsa` (interface pública usada pelo `EstoqueClient` da Requisição)
-- [ ] `GET /estoque`, `GET /estoque/criticos`, `GET /estoque/bolsas`, `POST /estoque/bolsas`
+- [x] Agregado `Bolsa` com teste
+- [x] `ReservarBolsa` (interface pública usada pelo `EstoqueClient` da Requisição)
+- [x] `GET /estoque`, `GET /estoque/criticos`, `GET /estoque/bolsas`, `POST /estoque/bolsas`
