@@ -277,16 +277,19 @@ Declaração conforme a **PO-CESAR-021**, categoria **Condicionado** (uso permit
 
 | Item | Declaração |
 | --- | --- |
-| **Ferramenta** | Claude (Anthropic), modelo Claude Opus, usado como agente com acesso ao repositório. |
-| **Finalidade** | Gerar, a partir do planejamento da Parte 2 e do código da Parte 1: as specs em `specs/`, a estrutura de pacotes por contexto, o código das três camadas, os testes (unitários, ArchUnit, Cucumber, integração e aceitação), as migrações Flyway, a adaptação da esteira e da página, e este README. Os commits feitos pela IA estão marcados com `Co-Authored-By: Claude`. |
+| **Ferramenta** | Claude (Anthropic), modelo Claude Opus, usado como agente com acesso aos repositórios do squad no GitHub. |
+| **Ligação entre as três partes** | O Claude leu o repositório da Parte 1 ([SO](https://github.com/egs3-coder/SO): código, esteira, Dockerfile e Render) e o da Parte 2 ([planejamento](https://github.com/egs3-coder/Trabalho-U2-Parte-2-Planejamento-da-remodelagem): contextos, agregado, glossário, Gherkin e ADRs). A partir deles, montou este repositório da Parte 3: trouxe `docs/arquitetura/` e `features/` da Parte 2, adaptou a esteira e o deploy da Parte 1 e refatorou o código com DDD. |
+| **Finalidade (código)** | Gerar as specs em `specs/`, a estrutura de pacotes por contexto, o código das três camadas, os testes (unitários, ArchUnit, Cucumber, integração e aceitação), as migrações Flyway, a adaptação da página e este README. Os commits feitos pela IA estão marcados com `Co-Authored-By: Claude`. |
+| **Finalidade (deploy)** | O Claude orientou, passo a passo, a configuração do deploy da versão nova; **quem executou foi o squad**, nas próprias contas: <br>• **Render:** o banco gratuito da Parte 1 estava suspenso (expirado); o squad apagou o banco, recriou pelo Blueprint `hemocentro` (o sync religou as variáveis `DB_*` da API) e trocou a imagem do serviço `hemocentro-api` de `ghcr.io/egs3-coder/so` para `ghcr.io/egs3-coder/parte-3-so`; <br>• **GitHub:** o squad conferiu que o pacote `parte-3-so` está público, cadastrou o secret `RENDER_DEPLOY_HOOK_URL` e a variável `APP_URL` e fez o merge do PR #1. <br>Depois do merge, o Claude leu o resultado da esteira e corrigiu dois erros dele próprio: `features/` fora do build da imagem e o `grep` do teste de fumaça. Com isso, o deploy e o teste de fumaça ficaram verdes (commit `4c878e6`). |
 | **O que a IA não decidiu** | O domínio, os contextos, as invariantes I1–I5, a regra de plasma (devolutiva de 13/11), o glossário, o cenário Gherkin e as decisões dos ADRs vieram da Parte 2, feita e validada pelo squad. |
-| **Como foi validado (automático)** | Cada mudança passou pela esteira: os testes de domínio e o Cucumber ficaram **vermelhos** com o esqueleto e **verdes** com a implementação (PR #1); o ArchUnit confere a regra de dependência; os testes de integração rodam contra PostgreSQL 17 real; a aceitação HTTP percorre os seis contextos. |
+| **Como foi validado (automático)** | Cada mudança passou pela esteira: os testes de domínio e o Cucumber ficaram **vermelhos** com o esqueleto e **verdes** com a implementação (PR #1); o ArchUnit confere a regra de dependência; os testes de integração rodam contra PostgreSQL 17 real; a aceitação HTTP percorre os seis contextos; o teste de fumaça confere a versão publicada. |
 | **Como foi validado (pelo squad)** | Preencher antes de 01/12, marcando só o que foi feito de verdade: |
 
 - [ ] João e Pablo: conferiram as mensagens de recusa e a tabela de compatibilidade de hemácias e plasma em `HemocomponenteCompatibilidadeTest` contra o material da aula
 - [ ] Lucas e Saulo: revisaram o PR #1 (vermelho → verde → refatoração) e rodaram `mvn test` na própria máquina
 - [ ] Thiago e Eloi: fizeram o fluxo de ponta a ponta na página (etapa 05) e conferiram a conversão °F → °C
-- [ ] Ewerton: configurou o deploy (seção 6), conferiu a URL no ar e o teste de fumaça na aba Actions
+- [x] Ewerton: fez o fluxo da etapa 05 no site publicado (REQ-001 entregue; REQ-002 recusada com "Tipo sanguíneo incompatível") em 23/11
+- [x] Ewerton: configurou o deploy (seção 6) com orientação do Claude, conferiu a URL no ar e a versão em `/api/info` em 23/11
 - [ ] Todos: ensaiaram explicar qualquer parte do código (o professor sorteia quem fala)
 
 ---
