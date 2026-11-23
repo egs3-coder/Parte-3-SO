@@ -10,6 +10,8 @@ COPY pom.xml .
 RUN --mount=type=cache,target=/root/.m2 mvn -B -q dependency:go-offline
 
 COPY src ./src
+# O cenário Gherkin da Parte 2 fica na raiz (features/) e roda junto dos testes unitários no build.
+COPY features ./features
 # "package" compila e roda os testes unitários (surefire). Teste vermelho = build quebra = não há imagem.
 # Os testes de integração/aceitação (*IT) precisam de Docker para o Postgres e rodam na esteira (mvn verify).
 RUN --mount=type=cache,target=/root/.m2 mvn -B package
