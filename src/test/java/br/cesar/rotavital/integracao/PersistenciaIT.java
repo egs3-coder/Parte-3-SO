@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.cesar.rotavital.TestcontainersConfiguration;
 import br.cesar.rotavital.captacao.negocio.dominio.Cpf;
@@ -89,6 +90,7 @@ class PersistenciaIT {
 
     @Test
     @DisplayName("Estoque: reserva grava status e requisição; a lista em estoque vem ordenada pela validade")
+    @Transactional // a trava pessimista (SELECT ... FOR UPDATE) só existe dentro de uma transação
     void estoque() {
         Bolsa b1 = Bolsa.registrar(new CodigoBolsa("B-1"), Hemocomponente.CONCENTRADO_HEMACIAS,
                 TipoSanguineo.A_POSITIVO, HOJE.minusDays(2));
