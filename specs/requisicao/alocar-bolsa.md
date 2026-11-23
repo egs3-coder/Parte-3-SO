@@ -11,7 +11,7 @@ Enviar bolsa incompatível ou vencida é o erro mais caro do Rota Vital, por iss
 
 ## Linguagem
 
-Requisição, item da requisição, alocação de bolsa, bolsa candidata, hemocomponente (concentrado de hemácias,
+Requisição, item da requisição, alocação de bolsa, bolsa reservada, hemocomponente (concentrado de hemácias,
 plasma fresco congelado), tipo sanguíneo (grupo ABO + fator Rh), compatibilidade, validade, prioridade
 (rotina, urgência, emergência), entrega prevista, justificativa clínica, unidade solicitante, reserva.
 
@@ -51,9 +51,15 @@ Viraram [`features/alocar_bolsa.feature`](../../features/alocar_bolsa.feature), 
 
 ## Eventos
 
-Nenhum publicado nesta funcionalidade. A alocação aceita chama o Estoque pela interface pública
-(`EstoqueGateway.reservar`), na mesma transação: se a reserva falhar (bolsa já reservada por outra requisição),
-a alocação é desfeita.
+Nenhum publicado nesta funcionalidade. O caso de uso pede a reserva ao Estoque pela interface pública
+(`EstoqueGateway.reservar`, comando ReservarBolsas da saga) e entrega a `BolsaReservada` ao agregado, como no
+diagrama B.1 da Parte 2. Se o Estoque recusar (bolsa já reservada por outra requisição, vencida, inexistente), nada
+é alocado. Se o agregado recusar, o caso de uso libera a reserva (`EstoqueGateway.liberar`, compensação), além de a
+transação ser desfeita; assim a regra vale também nos testes sem banco.
+
+> Revisão da spec (antes do código): a primeira versão consultava a bolsa e só reservava depois da alocação.
+> Reservar primeiro usa o mesmo nome do diagrama da Parte 2 (`alocar(itemId, BolsaReservada)`) e evita uma
+> segunda ida ao Estoque.
 
 ## Fora do escopo
 
