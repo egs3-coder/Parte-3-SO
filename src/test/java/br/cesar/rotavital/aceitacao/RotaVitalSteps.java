@@ -36,6 +36,7 @@ public class RotaVitalSteps {
     /** Tabelas de todos os contextos, limpas antes de cada cenário. */
     static final String TABELAS = String.join(", ",
             "captacao.doacao", "captacao.doador", "estoque.bolsa", "rede.unidade",
+            "requisicao.alocacao", "requisicao.item", "requisicao.requisicao",
             "expedicao.remessa_bolsa", "expedicao.remessa", "transporte.leitura", "transporte.viagem");
 
     /** CPFs válidos (dígitos verificadores corretos), um por doador criado nos cenários. */
