@@ -101,32 +101,72 @@ public final class Requisicao {
 
     /** Passo 1 da saga: a atendente assume o pedido. */
     public void iniciarAtendimento() {
-        if (status != StatusRequisicao.REGISTRADA) {
-            throw new RegraDeNegocioException(TRANSICAO_INVALIDA);
-        }
-        status = StatusRequisicao.EM_ATENDIMENTO;
+        transicionar(StatusRequisicao.REGISTRADA, StatusRequisicao.EM_ATENDIMENTO, TRANSICAO_INVALIDA);
     }
 
     /**
-     * Aloca uma bolsa reservada no Estoque a um item. A primeira regra quebrada recusa a operação e nada muda.
+     * Aloca uma bolsa reservada no Estoque a um item. Verifica I5, I3 (bolsa repetida), I1, I2 e I3 (quantidade),
+     * nessa ordem; a primeira regra quebrada recusa a operação e nada muda.
      */
     public void alocar(ItemId itemId, BolsaReservada bolsa, LocalDateTime agora) {
-        if (status != StatusRequisicao.EM_ATENDIMENTO) {
-            throw new RegraDeNegocioException(NAO_ESTA_EM_ATENDIMENTO);
+        exigirStatus(StatusRequisicao.EM_ATENDIMENTO, NAO_ESTA_EM_ATENDIMENTO);
+        ItemRequisicao item = itemOuFalha(itemId);
+        verificarAlocacao(item, bolsa, agora);
+        item.adicionar(AlocacaoBolsa.de(bolsa, agora));
+    }
+
+    /** Compensação: tira a bolsa do item (ex.: a Expedição achou a embalagem rompida). */
+    public void desalocar(ItemId itemId, CodigoBolsa codigo) {
+        exigirStatus(StatusRequisicao.EM_ATENDIMENTO, NAO_ESTA_EM_ATENDIMENTO);
+        if (!itemOuFalha(itemId).remover(codigo)) {
+            throw new RegraDeNegocioException("Bolsa " + codigo + " não está alocada ao item " + itemId);
         }
-        ItemRequisicao item = null;
-        for (ItemRequisicao i : itens) {
-            if (i.id().equals(itemId)) {
-                item = i;
-            }
+    }
+
+    /** I5: só fica ATENDIDA com todos os itens completos. */
+    public void marcarAtendida() {
+        exigirStatus(StatusRequisicao.EM_ATENDIMENTO, ITENS_INCOMPLETOS);
+        if (!completa()) {
+            throw new RegraDeNegocioException(ITENS_INCOMPLETOS);
         }
-        if (item == null) {
-            throw new RegraDeNegocioException(ITEM_INEXISTENTE + ": " + itemId);
+        status = StatusRequisicao.ATENDIDA;
+    }
+
+    /** Guarda a guia devolvida pela Expedição (resposta RemessaMontada). */
+    public void registrarRemessa(String numeroGuia) {
+        exigirStatus(StatusRequisicao.ATENDIDA, TRANSICAO_INVALIDA);
+        guiaRemessa = obrigatorio(numeroGuia, "Número da guia é obrigatório");
+    }
+
+    /** Ponto sem volta da saga: o Transporte abriu a viagem. */
+    public void iniciarTransporte(String idViagem) {
+        if (status != StatusRequisicao.ATENDIDA || guiaRemessa == null) {
+            throw new RegraDeNegocioException(DESPACHO_SEM_REMESSA);
         }
-        for (ItemRequisicao i : itens) {
-            if (i.contem(bolsa.codigo())) {
-                throw new RegraDeNegocioException(BOLSA_REPETIDA);
-            }
+        viagemId = obrigatorio(idViagem, "Id da viagem é obrigatório");
+        status = StatusRequisicao.EM_TRANSPORTE;
+    }
+
+    /** O hospital recebeu: encerra a requisição. */
+    public void confirmarEntrega() {
+        transicionar(StatusRequisicao.EM_TRANSPORTE, StatusRequisicao.ENTREGUE, ENTREGA_FORA_DO_TRANSPORTE);
+    }
+
+    /** Cancela antes do transporte e devolve as bolsas alocadas, para o Estoque liberar (compensação). */
+    public List<CodigoBolsa> cancelar(String motivo) {
+        if (!CANCELAVEIS.contains(status)) {
+            throw new RegraDeNegocioException(NAO_CANCELAVEL);
+        }
+        motivoCancelamento = obrigatorio(motivo, CANCELAMENTO_SEM_MOTIVO);
+        status = StatusRequisicao.CANCELADA;
+        return bolsasAlocadas();
+    }
+
+    // ---------- regras ----------
+
+    private void verificarAlocacao(ItemRequisicao item, BolsaReservada bolsa, LocalDateTime agora) {
+        if (contemBolsa(bolsa.codigo())) {
+            throw new RegraDeNegocioException(BOLSA_REPETIDA);
         }
         if (bolsa.hemocomponente() != item.hemocomponente()) {
             throw new RegraDeNegocioException(HEMOCOMPONENTE_DIFERENTE);
@@ -140,71 +180,32 @@ public final class Requisicao {
         if (item.completo()) {
             throw new RegraDeNegocioException(ITEM_COMPLETO);
         }
-        item.adicionar(AlocacaoBolsa.de(bolsa, agora));
     }
 
-    /** Compensação: tira a bolsa do item (ex.: a Expedição achou a embalagem rompida). */
-    public void desalocar(ItemId itemId, CodigoBolsa codigo) {
-        if (status != StatusRequisicao.EM_ATENDIMENTO) {
-            throw new RegraDeNegocioException(NAO_ESTA_EM_ATENDIMENTO);
-        }
-        ItemRequisicao item = item(itemId)
-                .orElseThrow(() -> new RegraDeNegocioException(ITEM_INEXISTENTE + ": " + itemId));
-        if (!item.remover(codigo)) {
-            throw new RegraDeNegocioException("Bolsa " + codigo + " não está alocada ao item " + itemId);
+    private void transicionar(StatusRequisicao de, StatusRequisicao para, String mensagem) {
+        exigirStatus(de, mensagem);
+        status = para;
+    }
+
+    private void exigirStatus(StatusRequisicao esperado, String mensagem) {
+        if (status != esperado) {
+            throw new RegraDeNegocioException(mensagem);
         }
     }
 
-    /** I5: só fica ATENDIDA com todos os itens completos. */
-    public void marcarAtendida() {
-        if (status != StatusRequisicao.EM_ATENDIMENTO || !completa()) {
-            throw new RegraDeNegocioException(ITENS_INCOMPLETOS);
-        }
-        status = StatusRequisicao.ATENDIDA;
+    private ItemRequisicao itemOuFalha(ItemId itemId) {
+        return item(itemId).orElseThrow(() -> new RegraDeNegocioException(ITEM_INEXISTENTE + ": " + itemId));
     }
 
-    /** Guarda a guia devolvida pela Expedição (resposta RemessaMontada). */
-    public void registrarRemessa(String numeroGuia) {
-        if (status != StatusRequisicao.ATENDIDA) {
-            throw new RegraDeNegocioException(TRANSICAO_INVALIDA);
-        }
-        if (numeroGuia == null || numeroGuia.isBlank()) {
-            throw new RegraDeNegocioException("Número da guia é obrigatório");
-        }
-        guiaRemessa = numeroGuia.trim();
+    private boolean contemBolsa(CodigoBolsa codigo) {
+        return itens.stream().anyMatch(i -> i.contem(codigo));
     }
 
-    /** Ponto sem volta da saga: o Transporte abriu a viagem. */
-    public void iniciarTransporte(String idViagem) {
-        if (status != StatusRequisicao.ATENDIDA || guiaRemessa == null) {
-            throw new RegraDeNegocioException(DESPACHO_SEM_REMESSA);
+    private static String obrigatorio(String valor, String mensagem) {
+        if (valor == null || valor.isBlank()) {
+            throw new RegraDeNegocioException(mensagem);
         }
-        if (idViagem == null || idViagem.isBlank()) {
-            throw new RegraDeNegocioException("Id da viagem é obrigatório");
-        }
-        viagemId = idViagem.trim();
-        status = StatusRequisicao.EM_TRANSPORTE;
-    }
-
-    /** O hospital recebeu: encerra a requisição. */
-    public void confirmarEntrega() {
-        if (status != StatusRequisicao.EM_TRANSPORTE) {
-            throw new RegraDeNegocioException(ENTREGA_FORA_DO_TRANSPORTE);
-        }
-        status = StatusRequisicao.ENTREGUE;
-    }
-
-    /** Cancela antes do transporte e devolve as bolsas alocadas, para o Estoque liberar (compensação). */
-    public List<CodigoBolsa> cancelar(String motivo) {
-        if (!CANCELAVEIS.contains(status)) {
-            throw new RegraDeNegocioException(NAO_CANCELAVEL);
-        }
-        if (motivo == null || motivo.isBlank()) {
-            throw new RegraDeNegocioException(CANCELAMENTO_SEM_MOTIVO);
-        }
-        motivoCancelamento = motivo.trim();
-        status = StatusRequisicao.CANCELADA;
-        return bolsasAlocadas();
+        return valor.trim();
     }
 
     // ---------- leitura ----------
