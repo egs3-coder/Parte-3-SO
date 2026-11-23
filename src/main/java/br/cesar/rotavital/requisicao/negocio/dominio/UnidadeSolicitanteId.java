@@ -4,7 +4,10 @@ package br.cesar.rotavital.requisicao.negocio.dominio;
 public record UnidadeSolicitanteId(String codigo) {
 
     public UnidadeSolicitanteId {
-        // TODO verde: obrigatório
+        if (codigo == null || codigo.isBlank()) {
+            throw new IllegalArgumentException("Unidade solicitante é obrigatória");
+        }
+        codigo = codigo.trim().toUpperCase();
     }
 
     @Override

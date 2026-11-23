@@ -6,6 +6,8 @@ public record Quantidade(int valor) {
     public static final int MAXIMO = 20;
 
     public Quantidade {
-        // TODO verde: de 1 a 20
+        if (valor < 1 || valor > MAXIMO) {
+            throw new IllegalArgumentException("Quantidade deve ser de 1 a " + MAXIMO + " bolsas");
+        }
     }
 }

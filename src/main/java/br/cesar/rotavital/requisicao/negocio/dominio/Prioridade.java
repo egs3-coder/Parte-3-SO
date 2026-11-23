@@ -18,7 +18,7 @@ public enum Prioridade {
 
     /** Horário previsto de entrega: agora + prazo da prioridade (usado na invariante I2). */
     public LocalDateTime entregaPrevista(LocalDateTime agora) {
-        return agora; // TODO verde: agora + prazo
+        return agora.plus(prazo);
     }
 
     public Duration prazo() {
@@ -26,7 +26,7 @@ public enum Prioridade {
     }
 
     public boolean exigeJustificativa() {
-        return false; // TODO verde: I4
+        return this == EMERGENCIA;
     }
 
     public static Prioridade deNome(String nome) {

@@ -4,7 +4,9 @@ package br.cesar.rotavital.requisicao.negocio.dominio;
 public record RequisicaoId(String valor) {
 
     public RequisicaoId {
-        // TODO verde: formato REQ-001
+        if (valor == null || !valor.matches("REQ-\\d{3,}")) {
+            throw new IllegalArgumentException("Id de requisição inválido: " + valor);
+        }
     }
 
     public static RequisicaoId doNumero(long numero) {

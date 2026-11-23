@@ -6,7 +6,10 @@ public record JustificativaClinica(String texto) {
     public static final int TAMANHO_MAXIMO = 500;
 
     public JustificativaClinica {
-        // TODO verde: aparar e limitar a 500 caracteres
+        texto = texto == null ? "" : texto.trim();
+        if (texto.length() > TAMANHO_MAXIMO) {
+            throw new IllegalArgumentException("Justificativa clínica deve ter até " + TAMANHO_MAXIMO + " caracteres");
+        }
     }
 
     public static JustificativaClinica nenhuma() {
@@ -14,6 +17,6 @@ public record JustificativaClinica(String texto) {
     }
 
     public boolean informada() {
-        return texto != null;
+        return !texto.isEmpty();
     }
 }

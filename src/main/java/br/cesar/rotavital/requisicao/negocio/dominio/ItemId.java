@@ -4,7 +4,9 @@ package br.cesar.rotavital.requisicao.negocio.dominio;
 public record ItemId(String valor) {
 
     public ItemId {
-        // TODO verde: formato ITEM-1
+        if (valor == null || !valor.matches("ITEM-[1-9]\\d*")) {
+            throw new IllegalArgumentException("Id de item inválido: " + valor);
+        }
     }
 
     public static ItemId daPosicao(int posicao) {

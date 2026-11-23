@@ -3,9 +3,11 @@ package br.cesar.rotavital.requisicao.negocio.dominio;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import br.cesar.rotavital.compartilhado.dominio.CodigoBolsa;
 import br.cesar.rotavital.compartilhado.dominio.RegraDeNegocioException;
@@ -40,6 +42,9 @@ public final class Requisicao {
     public static final String CANCELAMENTO_SEM_MOTIVO = "Cancelamento exige motivo";
     public static final String TRANSICAO_INVALIDA = "Transição de status inválida";
 
+    private static final Set<StatusRequisicao> CANCELAVEIS =
+            EnumSet.of(StatusRequisicao.REGISTRADA, StatusRequisicao.EM_ATENDIMENTO, StatusRequisicao.ATENDIDA);
+
     private final RequisicaoId id;
     private final UnidadeSolicitanteId solicitante;
     private final Prioridade prioridade;
@@ -70,7 +75,13 @@ public final class Requisicao {
     public static Requisicao registrar(RequisicaoId id, UnidadeSolicitanteId solicitante, Prioridade prioridade,
                                        JustificativaClinica justificativa, List<NovoItem> pedidos,
                                        LocalDateTime agora) {
+        if (pedidos == null || pedidos.isEmpty()) {
+            throw new RegraDeNegocioException(SEM_ITENS);
+        }
         JustificativaClinica texto = justificativa == null ? JustificativaClinica.nenhuma() : justificativa;
+        if (prioridade != null && prioridade.exigeJustificativa() && !texto.informada()) {
+            throw new RegraDeNegocioException(EMERGENCIA_SEM_JUSTIFICATIVA);
+        }
         List<ItemRequisicao> itens = new ArrayList<>();
         for (int i = 0; i < pedidos.size(); i++) {
             itens.add(ItemRequisicao.novo(ItemId.daPosicao(i + 1), pedidos.get(i)));
@@ -90,6 +101,9 @@ public final class Requisicao {
 
     /** Passo 1 da saga: a atendente assume o pedido. */
     public void iniciarAtendimento() {
+        if (status != StatusRequisicao.REGISTRADA) {
+            throw new RegraDeNegocioException(TRANSICAO_INVALIDA);
+        }
         status = StatusRequisicao.EM_ATENDIMENTO;
     }
 
@@ -97,41 +111,98 @@ public final class Requisicao {
      * Aloca uma bolsa reservada no Estoque a um item. A primeira regra quebrada recusa a operação e nada muda.
      */
     public void alocar(ItemId itemId, BolsaReservada bolsa, LocalDateTime agora) {
-        // TODO verde: invariantes I1, I2, I3 e I5
-        ItemRequisicao item = item(itemId).orElseThrow();
+        if (status != StatusRequisicao.EM_ATENDIMENTO) {
+            throw new RegraDeNegocioException(NAO_ESTA_EM_ATENDIMENTO);
+        }
+        ItemRequisicao item = null;
+        for (ItemRequisicao i : itens) {
+            if (i.id().equals(itemId)) {
+                item = i;
+            }
+        }
+        if (item == null) {
+            throw new RegraDeNegocioException(ITEM_INEXISTENTE + ": " + itemId);
+        }
+        for (ItemRequisicao i : itens) {
+            if (i.contem(bolsa.codigo())) {
+                throw new RegraDeNegocioException(BOLSA_REPETIDA);
+            }
+        }
+        if (bolsa.hemocomponente() != item.hemocomponente()) {
+            throw new RegraDeNegocioException(HEMOCOMPONENTE_DIFERENTE);
+        }
+        if (!item.hemocomponente().compativel(bolsa.tipoSanguineo(), item.tipoReceptor())) {
+            throw new RegraDeNegocioException(TIPO_INCOMPATIVEL);
+        }
+        if (bolsa.validade().vencidaEm(prioridade.entregaPrevista(agora))) {
+            throw new RegraDeNegocioException(VENCE_ANTES_DA_ENTREGA);
+        }
+        if (item.completo()) {
+            throw new RegraDeNegocioException(ITEM_COMPLETO);
+        }
         item.adicionar(AlocacaoBolsa.de(bolsa, agora));
     }
 
     /** Compensação: tira a bolsa do item (ex.: a Expedição achou a embalagem rompida). */
     public void desalocar(ItemId itemId, CodigoBolsa codigo) {
-        item(itemId).orElseThrow().remover(codigo);
+        if (status != StatusRequisicao.EM_ATENDIMENTO) {
+            throw new RegraDeNegocioException(NAO_ESTA_EM_ATENDIMENTO);
+        }
+        ItemRequisicao item = item(itemId)
+                .orElseThrow(() -> new RegraDeNegocioException(ITEM_INEXISTENTE + ": " + itemId));
+        if (!item.remover(codigo)) {
+            throw new RegraDeNegocioException("Bolsa " + codigo + " não está alocada ao item " + itemId);
+        }
     }
 
     /** I5: só fica ATENDIDA com todos os itens completos. */
     public void marcarAtendida() {
-        // TODO verde: só com todos os itens completos (I5)
+        if (status != StatusRequisicao.EM_ATENDIMENTO || !completa()) {
+            throw new RegraDeNegocioException(ITENS_INCOMPLETOS);
+        }
         status = StatusRequisicao.ATENDIDA;
     }
 
     /** Guarda a guia devolvida pela Expedição (resposta RemessaMontada). */
     public void registrarRemessa(String numeroGuia) {
+        if (status != StatusRequisicao.ATENDIDA) {
+            throw new RegraDeNegocioException(TRANSICAO_INVALIDA);
+        }
+        if (numeroGuia == null || numeroGuia.isBlank()) {
+            throw new RegraDeNegocioException("Número da guia é obrigatório");
+        }
         guiaRemessa = numeroGuia.trim();
     }
 
     /** Ponto sem volta da saga: o Transporte abriu a viagem. */
     public void iniciarTransporte(String idViagem) {
-        viagemId = idViagem;
+        if (status != StatusRequisicao.ATENDIDA || guiaRemessa == null) {
+            throw new RegraDeNegocioException(DESPACHO_SEM_REMESSA);
+        }
+        if (idViagem == null || idViagem.isBlank()) {
+            throw new RegraDeNegocioException("Id da viagem é obrigatório");
+        }
+        viagemId = idViagem.trim();
         status = StatusRequisicao.EM_TRANSPORTE;
     }
 
     /** O hospital recebeu: encerra a requisição. */
     public void confirmarEntrega() {
+        if (status != StatusRequisicao.EM_TRANSPORTE) {
+            throw new RegraDeNegocioException(ENTREGA_FORA_DO_TRANSPORTE);
+        }
         status = StatusRequisicao.ENTREGUE;
     }
 
     /** Cancela antes do transporte e devolve as bolsas alocadas, para o Estoque liberar (compensação). */
     public List<CodigoBolsa> cancelar(String motivo) {
-        motivoCancelamento = motivo;
+        if (!CANCELAVEIS.contains(status)) {
+            throw new RegraDeNegocioException(NAO_CANCELAVEL);
+        }
+        if (motivo == null || motivo.isBlank()) {
+            throw new RegraDeNegocioException(CANCELAMENTO_SEM_MOTIVO);
+        }
+        motivoCancelamento = motivo.trim();
         status = StatusRequisicao.CANCELADA;
         return bolsasAlocadas();
     }

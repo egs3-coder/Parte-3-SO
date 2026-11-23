@@ -18,14 +18,14 @@ public enum Hemocomponente {
     CONCENTRADO_HEMACIAS("Concentrado de hemácias", 35) {
         @Override
         public boolean compativel(TipoSanguineo doador, TipoSanguineo receptor) {
-            return true; // TODO verde: antígenos da bolsa precisam existir no receptor
+            return receptor.antigenos().containsAll(doador.antigenos());
         }
     },
 
     PLASMA_FRESCO_CONGELADO("Plasma fresco congelado", 365) {
         @Override
         public boolean compativel(TipoSanguineo doador, TipoSanguineo receptor) {
-            return true; // TODO verde: regra invertida, Rh não conta
+            return doador.antigenosAbo().containsAll(receptor.antigenosAbo());
         }
     };
 
