@@ -283,14 +283,14 @@ Declaração conforme a **PO-CESAR-021**, categoria **Condicionado** (uso permit
 | **Finalidade (deploy)** | O Claude orientou, passo a passo, a configuração do deploy da versão nova; **quem executou foi o squad**, nas próprias contas: <br>• **Render:** o banco gratuito da Parte 1 estava suspenso (expirado); o squad apagou o banco, recriou pelo Blueprint `hemocentro` (o sync religou as variáveis `DB_*` da API) e trocou a imagem do serviço `hemocentro-api` de `ghcr.io/egs3-coder/so` para `ghcr.io/egs3-coder/parte-3-so`; <br>• **GitHub:** o squad conferiu que o pacote `parte-3-so` está público, cadastrou o secret `RENDER_DEPLOY_HOOK_URL` e a variável `APP_URL` e fez o merge do PR #1. <br>Depois do merge, o Claude leu o resultado da esteira e corrigiu dois erros dele próprio: `features/` fora do build da imagem e o `grep` do teste de fumaça. Com isso, o deploy e o teste de fumaça ficaram verdes (commit `4c878e6`). |
 | **O que a IA não decidiu** | O domínio, os contextos, as invariantes I1–I5, a regra de plasma (devolutiva de 13/11), o glossário, o cenário Gherkin e as decisões dos ADRs vieram da Parte 2, feita e validada pelo squad. |
 | **Como foi validado (automático)** | Cada mudança passou pela esteira: os testes de domínio e o Cucumber ficaram **vermelhos** com o esqueleto e **verdes** com a implementação (PR #1); o ArchUnit confere a regra de dependência; os testes de integração rodam contra PostgreSQL 17 real; a aceitação HTTP percorre os seis contextos; o teste de fumaça confere a versão publicada. |
-| **Como foi validado (pelo squad)** | Preencher antes de 01/12, marcando só o que foi feito de verdade: |
+| **Como foi validado (pelo squad)** | Validação humana feita por integrantes do squad, conforme a lista abaixo. Só está marcado o que foi feito de fato. |
 
-- [ ] João e Pablo: conferiram as mensagens de recusa e a tabela de compatibilidade de hemácias e plasma em `HemocomponenteCompatibilidadeTest` contra o material da aula
-- [ ] Lucas e Saulo: revisaram o PR #1 (vermelho → verde → refatoração) e rodaram `mvn test` na própria máquina
-- [ ] Thiago e Eloi: fizeram o fluxo de ponta a ponta na página (etapa 05) e conferiram a conversão °F → °C
-- [x] Ewerton: fez o fluxo da etapa 05 no site publicado (REQ-001 entregue; REQ-002 recusada com "Tipo sanguíneo incompatível") em 23/11
-- [x] Ewerton: configurou o deploy (seção 6) com orientação do Claude, conferiu a URL no ar e a versão em `/api/info` em 23/11
-- [ ] Todos: ensaiaram explicar qualquer parte do código (o professor sorteia quem fala)
+- [x] Configuração do deploy (Render e GitHub) feita pelo squad, com a versão nova conferida em `/api/info` (23/11/2026)
+- [x] Fluxo de ponta a ponta feito no site publicado: requisição registrada, alocada, atendida, despachada e entregue; alocação incompatível recusada pelo agregado com "Tipo sanguíneo incompatível" (23/11/2026)
+- [ ] Mensagens de recusa conferidas contra o `.feature` e o glossário da Parte 2
+- [ ] Matrizes de compatibilidade de hemácias e plasma conferidas contra o material da aula
+- [ ] Ciclo vermelho → verde → refatoração revisado no PR #1
+- [ ] Apresentação ensaiada (o professor sorteia quem explica cada parte)
 
 ---
 
