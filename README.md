@@ -287,8 +287,8 @@ Declaração conforme a **PO-CESAR-021**, categoria **Condicionado** (uso permit
 
 - [x] Configuração do deploy (Render e GitHub) feita pelo squad, com a versão nova conferida em `/api/info` (23/11/2026)
 - [x] Fluxo de ponta a ponta feito no site publicado: requisição registrada, alocada, atendida, despachada e entregue; alocação incompatível recusada pelo agregado com "Tipo sanguíneo incompatível" (23/11/2026)
-- [ ] Mensagens de recusa conferidas contra o `.feature` e o glossário da Parte 2
-- [ ] Matrizes de compatibilidade de hemácias e plasma conferidas contra o material da aula
+- [x] Mensagens de recusa conferidas contra o `.feature` e o glossário da Parte 2 (24/11/2026)
+- [x] Matrizes de compatibilidade de hemácias e plasma conferidas contra o material da aula, no site publicado (24/11/2026)
 - [ ] Ciclo vermelho → verde → refatoração revisado no PR #1
 - [ ] Apresentação ensaiada (o professor sorteia quem explica cada parte)
 
