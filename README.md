@@ -289,7 +289,7 @@ Declaração conforme a **PO-CESAR-021**, categoria **Condicionado** (uso permit
 - [x] Fluxo de ponta a ponta feito no site publicado: requisição registrada, alocada, atendida, despachada e entregue; alocação incompatível recusada pelo agregado com "Tipo sanguíneo incompatível" (23/11/2026)
 - [x] Mensagens de recusa conferidas contra o `.feature` e o glossário da Parte 2 (24/11/2026)
 - [x] Matrizes de compatibilidade de hemácias e plasma conferidas contra o material da aula, no site publicado (24/11/2026)
-- [ ] Ciclo vermelho → verde → refatoração revisado no PR #1
+- [x] Ciclo vermelho → verde → refatoração revisado no PR #1 (24/11/2026)
 - [ ] Apresentação ensaiada (o professor sorteia quem explica cada parte)
 
 ---
